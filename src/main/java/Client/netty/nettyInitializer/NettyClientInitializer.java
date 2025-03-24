@@ -1,6 +1,9 @@
 package Client.netty.nettyInitializer;
 
 import Client.netty.handler.NettyClientHandler;
+import common.serializer.myCode.MyDecoder;
+import common.serializer.myCode.MyEncoder;
+import common.serializer.mySerializer.JsonSerializer;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -19,16 +22,9 @@ public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
     @Override
     protected void initChannel(SocketChannel ch) throws Exception{
         ChannelPipeline pipeline = ch.pipeline();
-        pipeline.addLast(
-                new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,0,4,0,4));
-        pipeline.addLast(new LengthFieldPrepender(4));
-        pipeline.addLast(new ObjectEncoder());
-        pipeline.addLast(new ObjectDecoder(new ClassResolver(){
-            @Override
-            public Class<?> resolve(String className) throws ClassNotFoundException{
-                return Class.forName(className);
-            }
-        }));
+        //使用自定义的编解码器
+        pipeline.addLast(new MyDecoder());
+        pipeline.addLast(new MyEncoder(new JsonSerializer()));
         pipeline.addLast(new NettyClientHandler());
     }
 }
