@@ -7,5 +7,5 @@ import java.net.InetSocketAddress;
  * @Date created in 13:08 2025/3/14
  */
 public interface ServiceRegister {
-    void register(String serviceName, InetSocketAddress serviceAddress);
+    void register(String serviceName, InetSocketAddress serviceAddress,boolean canRetry);
 }

@@ -18,6 +18,7 @@ import java.util.List;
 public class ZKServiceCenter implements ServiceCenter {
     private CuratorFramework client;
     private static final String ROOT_PATH = "MyRPC";
+    private static final String RETRY = "CanRetry";
     private serviceCache cache;
 
     public ZKServiceCenter() throws InterruptedException{
@@ -26,7 +27,7 @@ public class ZKServiceCenter implements ServiceCenter {
                 .sessionTimeoutMs(40000).retryPolicy(policy).namespace(ROOT_PATH).build();
         this.client.start();
         System.out.println("zookeeper 连接成功");
-        this.cache = new serviceCache();
+        cache = new serviceCache();
         watchZK watcher = new watchZK(client,cache);
         watcher.watchToUpdate(ROOT_PATH);
     }
@@ -44,6 +45,23 @@ public class ZKServiceCenter implements ServiceCenter {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean checkRetry(String serviceName){
+        boolean canRetry = false;
+        try{
+            List<String> serviceList = client.getChildren().forPath("/"+RETRY);
+            for(String s:serviceList){
+                if(s.equals(serviceName)){
+                    System.out.println("服务"+serviceName+"在白名单上，可进行重试");
+                    canRetry=true;
+                }
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return canRetry;
     }
     private String getServiceAddress(InetSocketAddress serverAddress){
         return serverAddress.getHostName()+

@@ -1,24 +1,27 @@
 package Client.proxy;
 
+import Client.retry.guavaRetry;
 import Client.rpcClient.RpcClient;
 import Client.rpcClient.impl.NettyRpcClient;
-import Client.rpcClient.impl.SimpleSocketRpcClient;
-
+import common.Message.RpcRequest;
+import common.Message.RpcResponse;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import common.Message.RpcRequest;
-import common.Message.RpcResponse;
-import Client.IOClient;
+
+import Client.serviceCenter.ServiceCenter;
+import Client.serviceCenter.ZKServiceCenter;
 /**
  * @Author cnwang
  * @Date created in 21:14 2025/3/12
  */
 public class ClientProxy implements InvocationHandler {
     private RpcClient rpcClient;
+    private ServiceCenter serviceCenter;
 
     public ClientProxy() throws InterruptedException{
-        rpcClient = new NettyRpcClient();
+        serviceCenter = new ZKServiceCenter();
+        rpcClient = new NettyRpcClient(serviceCenter);
     }
 
     @Override
@@ -27,7 +30,13 @@ public class ClientProxy implements InvocationHandler {
                 .interfaceName(method.getDeclaringClass().getName())
                 .methodName(method.getName())
                 .params(args).paramsType(method.getParameterTypes()).build();
-        RpcResponse response = rpcClient.sendRequest(request);
+
+        RpcResponse response;
+        if(serviceCenter.checkRetry(request.getInterfaceName())){
+            response = new guavaRetry().sendServiceWithRetry(request,rpcClient);
+        }else{
+            response = rpcClient.sendRequest(request);
+        }
         return response.getData();
     }
     public <T>T getProxy(Class<T> clazz){
