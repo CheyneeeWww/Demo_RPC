@@ -1,5 +1,7 @@
 package Client.proxy;
 
+import Client.circuitBreaker.CircuitBreaker;
+import Client.circuitBreaker.CircuitBreakerProvider;
 import Client.retry.guavaRetry;
 import Client.rpcClient.RpcClient;
 import Client.rpcClient.impl.NettyRpcClient;
@@ -18,10 +20,12 @@ import Client.serviceCenter.ZKServiceCenter;
 public class ClientProxy implements InvocationHandler {
     private RpcClient rpcClient;
     private ServiceCenter serviceCenter;
+    private CircuitBreakerProvider circuitBreakerProvider;
 
     public ClientProxy() throws InterruptedException{
         serviceCenter = new ZKServiceCenter();
         rpcClient = new NettyRpcClient(serviceCenter);
+        circuitBreakerProvider = new CircuitBreakerProvider();
     }
 
     @Override
@@ -31,11 +35,23 @@ public class ClientProxy implements InvocationHandler {
                 .methodName(method.getName())
                 .params(args).paramsType(method.getParameterTypes()).build();
 
+        //熔断器
+        CircuitBreaker circuitBreaker = circuitBreakerProvider.getCircuitBreaker(method.getName());
+        if(!circuitBreaker.allowRequest()){
+            return null;
+        }
         RpcResponse response;
         if(serviceCenter.checkRetry(request.getInterfaceName())){
             response = new guavaRetry().sendServiceWithRetry(request,rpcClient);
         }else{
             response = rpcClient.sendRequest(request);
+        }
+        //记录response的状态，上报给熔断器
+        if (response.getCode() ==200){
+            circuitBreaker.recordSuccess();
+        }
+        if (response.getCode()==500){
+            circuitBreaker.recordFailure();
         }
         return response.getData();
     }

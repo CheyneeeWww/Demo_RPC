@@ -1,5 +1,6 @@
 package common.serializer.myCode;
 
+import common.Message.RpcResponse;
 import common.Message.MessageType;
 import common.serializer.mySerializer.Serializer;
 import io.netty.buffer.ByteBuf;
@@ -34,6 +35,7 @@ public class MyDecoder extends ByteToMessageDecoder {
         //4.读取序列化数组
         byte[] bytes=new byte[length];
         in.readBytes(bytes);
+        System.out.println("bytes==="+new String(bytes));
         Object deserialize= serializer.deserializer(bytes, messageType);
         out.add(deserialize);
     }
