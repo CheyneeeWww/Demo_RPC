@@ -1,4 +1,4 @@
-package Message;
+package common.Message;
 
 import lombok.Builder;
 import lombok.Data;

@@ -14,7 +14,7 @@ import java.net.Socket;
  * @Date created in 21:36 2025/3/12
  */
 @AllArgsConstructor
-public class SimpleRPCServer implements RpcServer{
+public class SimpleRPCRPCServer implements RpcServer{
     private ServiceProvider serviceProvide;
     @Override
     public void start(int port){
