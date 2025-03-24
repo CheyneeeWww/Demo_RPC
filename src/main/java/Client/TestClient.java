@@ -10,7 +10,7 @@ import common.service.UserService;
  */
 public class TestClient {
     public static void main(String[] args){
-        ClientProxy clientProxy = new ClientProxy("127.0.0.1",9999);
+        ClientProxy clientProxy = new ClientProxy("127.0.0.1",9999,1);
         UserService proxy = clientProxy.getProxy(UserService.class);
         User user = proxy.getUserByUserId(2);
         System.out.println("从服务端得到的User"+user.toString());
