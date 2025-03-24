@@ -2,6 +2,7 @@ package Client.serviceCenter;
 
 import Client.cache.serviceCache;
 import Client.serviceCenter.ZkWatcher.watchZK;
+import Client.serviceCenter.balance.impl.ConsistencyHashBalance;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -37,8 +38,8 @@ public class ZKServiceCenter implements ServiceCenter {
             if(serviceList == null){
                 serviceList = client.getChildren().forPath("/"+serviceName);
             }
-            String string = serviceList.get(0);
-            return parseAddress(string);
+            String address = new ConsistencyHashBalance().balance(serviceList);
+            return parseAddress(address);
         }catch(Exception e){
             e.printStackTrace();
         }

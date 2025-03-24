@@ -1,5 +1,8 @@
 package Client.cache;
 
+import Client.serviceCenter.balance.LoadBalance;
+import Client.serviceCenter.balance.impl.ConsistencyHashBalance;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +42,7 @@ public class serviceCache {
         if (!cache.containsKey(serviceName)) {
             return null;
         }
-        List<String> addressList = cache.get(serviceName);
-        return addressList;
+        return cache.get(serviceName);
     }
     //从缓存中删除服务地址
     public void delete(String serviceName, String address) {
