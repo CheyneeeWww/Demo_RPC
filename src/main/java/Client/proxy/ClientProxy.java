@@ -16,19 +16,11 @@ import Client.IOClient;
  */
 public class ClientProxy implements InvocationHandler {
     private RpcClient rpcClient;
-    public ClientProxy(String host,int port,int choose){
-        switch(choose){
-            case 0:
-                rpcClient = new NettyRpcClient(host,port);
-                break;
-            case 1:
-                rpcClient = new SimpleSocketRpcClient(host,port);
-        }
+
+    public ClientProxy(){
+        rpcClient = new NettyRpcClient();
     }
 
-    public ClientProxy(String host,int port){
-        rpcClient = new NettyRpcClient(host,port);
-    }
     @Override
     public Object invoke(Object proxy,Method method,Object[] args) throws Throwable{
         RpcRequest request = RpcRequest.builder()
