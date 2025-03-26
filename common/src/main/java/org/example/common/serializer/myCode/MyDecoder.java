@@ -7,6 +7,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import lombok.extern.slf4j.Slf4j;
+import org.example.common.trace.TraceContext;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +23,12 @@ public class MyDecoder extends ByteToMessageDecoder {
         if(in.readableBytes()<6){
             return;
         }
+
+        int traceLength = in.readInt();
+        byte[] traceBytes = new byte[traceLength];
+        in.readBytes(traceBytes);
+        serializeTraceMsg(traceBytes);
+
         //1.读取消息类型
         short messageType = in.readShort();
         // 现在还只支持request与response请求
@@ -48,4 +55,13 @@ public class MyDecoder extends ByteToMessageDecoder {
         Object deserialize= serializer.deserialize(bytes, messageType);
         out.add(deserialize);
     }
+    //解析并存储traceMsg
+    private void serializeTraceMsg(byte[] traceByte){
+        String traceMsg=new String(traceByte);
+        String[] msgs=traceMsg.split(";");
+        if(!msgs[0].equals("")) TraceContext.setTraceId(msgs[0]);
+        if(!msgs[1].equals("")) TraceContext.setParentSpanId(msgs[1]);
+    }
+
+
 }

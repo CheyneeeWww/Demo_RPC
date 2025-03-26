@@ -5,6 +5,7 @@ import org.example.client.circuitBreaker.CircuitBreakerProvider;
 import org.example.client.retry.guavaRetry;
 import org.example.client.rpcClient.RpcClient;
 import org.example.client.rpcClient.impl.NettyRpcClient;
+import org.example.common.Message.RequestType;
 import org.example.common.Message.RpcRequest;
 import org.example.common.Message.RpcResponse;
 import java.lang.reflect.InvocationHandler;
@@ -15,6 +16,7 @@ import java.net.InetSocketAddress;
 import org.example.client.serviceCenter.ServiceCenter;
 import org.example.client.serviceCenter.ZKServiceCenter;
 import lombok.extern.slf4j.Slf4j;
+import org.example.trace.interceptor.ClientTraceInterceptor;
 
 /**
  * @Author cnwang
@@ -33,7 +35,11 @@ public class ClientProxy implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy,Method method,Object[] args) throws Throwable{
+        //trace记录
+        ClientTraceInterceptor.beforeInvoke();
+
         RpcRequest request = RpcRequest.builder()
+                .type(RequestType.NORMAL)
                 .interfaceName(method.getDeclaringClass().getName())
                 .methodName(method.getName())
                 .params(args).paramsType(method.getParameterTypes()).build();
@@ -72,6 +78,9 @@ public class ClientProxy implements InvocationHandler {
             }
             log.info("收到响应: {} 状态码: {}", request.getInterfaceName(), response.getCode());
         }
+
+        //trace上报
+        ClientTraceInterceptor.afterInvoke(method.getName());
 
         return response != null ? response.getData() : null;
     }

@@ -1,5 +1,6 @@
 package org.example.client.rpcClient.impl;
 
+import org.example.client.netty.MDCChannelHandler;
 import org.example.client.netty.NettyClientInitializer;
 import org.example.client.rpcClient.RpcClient;
 import org.example.common.Message.RpcRequest;
@@ -12,8 +13,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
+import org.example.common.trace.TraceContext;
 
 import java.net.InetSocketAddress;
+import java.util.Map;
 
 /**
  * @Author cnwang
@@ -38,6 +41,8 @@ public class NettyRpcClient implements RpcClient {
     @Override
     public RpcResponse sendRequest(RpcRequest request){
 
+        Map<String,String> mdcContextMap= TraceContext.getCopy();
+
         if(address == null){
             log.error("服务发现失败，返回的地址为 null");
             return RpcResponse.fail("服务发现失败，地址为 null");
@@ -48,6 +53,10 @@ public class NettyRpcClient implements RpcClient {
         try{
             ChannelFuture channelFuture = bootstrap.connect(host,port).sync();
             Channel channel = channelFuture.channel();
+
+            // 将当前Trace上下文保存到Channel属性
+            channel.attr(MDCChannelHandler.TRACE_CONTEXT_KEY).set(mdcContextMap);
+
             channel.writeAndFlush(request);
             channel.closeFuture().sync();
             AttributeKey<RpcResponse> key = AttributeKey.valueOf("RPCResponse");

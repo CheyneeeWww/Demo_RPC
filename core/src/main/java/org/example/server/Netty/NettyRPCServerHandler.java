@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.server.provider.ServiceProvider;
 import org.example.server.ratelimit.RateLimit;
+import org.example.trace.interceptor.ServerTraceInterceptor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,8 +28,14 @@ public class NettyRPCServerHandler extends SimpleChannelInboundHandler<RpcReques
             log.error("接收到非法请求，RpcRequest 为空");
             return;
         }
+
+        //trace记录
+        ServerTraceInterceptor.beforeHandle();
         RpcResponse response = getResponse(request);
-        ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+        //ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+        //trace上报
+        ServerTraceInterceptor.afterHandle(request.getMethodName());
+        ctx.writeAndFlush(response);
     }
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

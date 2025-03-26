@@ -16,8 +16,12 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RpcRequest implements Serializable{
+    private RequestType type=RequestType.NORMAL;
     private String interfaceName;
     private String methodName;
     private Object[] params;
     private Class<?>[] paramsType;
+    public static RpcRequest heartBeat() {
+        return RpcRequest.builder().type(RequestType.HEARTBEAT).build();
+    }
 }

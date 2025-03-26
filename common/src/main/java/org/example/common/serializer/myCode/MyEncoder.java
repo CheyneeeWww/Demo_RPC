@@ -9,6 +9,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.common.trace.TraceContext;
 
 /**
  * @Author cnwang
@@ -21,6 +22,11 @@ public class MyEncoder extends MessageToByteEncoder {
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
         log.debug("Encoding message of type: {}", msg.getClass());
+
+        String traceMsg = TraceContext.getTraceId()+";"+TraceContext.getSpanId();
+        byte[] traceBytes = traceMsg.getBytes();
+        out.writeInt(traceBytes.length);
+        out.writeBytes(traceBytes);
         //1.写入消息类型
         if(msg instanceof RpcRequest){
             out.writeShort(MessageType.REQUEST.getCode());

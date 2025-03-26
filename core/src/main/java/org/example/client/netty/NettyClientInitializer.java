@@ -1,5 +1,6 @@
 package org.example.client.netty;
 
+import io.netty.handler.timeout.IdleStateHandler;
 import org.example.common.serializer.myCode.MyDecoder;
 import org.example.common.serializer.myCode.MyEncoder;
 import org.example.common.serializer.mySerializer.Serializer;
@@ -8,6 +9,8 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.TimeUnit;
+
 
 /**
  * @Author cnwang
@@ -15,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
-
+    public NettyClientInitializer(){}
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
@@ -27,6 +30,10 @@ public class NettyClientInitializer extends ChannelInitializer<SocketChannel> {
             pipeline.addLast(new MyEncoder(Serializer.getSerializerByCode(3)));
             pipeline.addLast(new MyDecoder());
             pipeline.addLast(new NettyClientHandler());
+            pipeline.addLast(new MDCChannelHandler());
+
+            pipeline.addLast(new IdleStateHandler(0, 8, 0, TimeUnit.SECONDS));
+            pipeline.addLast(new HeartbeatHandler());
 
             log.info("Netty client pipeline initialized with serializer type: {}",Serializer.getSerializerByCode(3).toString());
         } catch (Exception e) {
